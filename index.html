@@ -9,6 +9,14 @@
             from {transform: rotate(0deg);}
             to {transform: rotate(360deg);}
         }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 0 24px 120px;
+        }
+        button {
+            cursor: pointer;
+        }
         button.research-tool {
             outline: 2px solid red;
             background-color: magenta;
@@ -17,30 +25,30 @@
             animation-duration: 15s;
             animation-iteration-count: infinite;
             animation-timing-function: linear;
-            position:absolute;
+            position: fixed;
             right: 100px;
-            bottom: 100px;
+            bottom: 40px;
             font-size: 20px;
+            padding: 16px 20px;
         }
         button.research-tool:hover {
             outline: 2px solid red;
             background-color: cyan;
             color: magenta;
         }
-
         .research-tool-modal {
             display: none;
             border: 8px solid greenyellow;
             border-radius: 8px;
             background-color: cyan;
             color: red;
-            position: absolute;
-            bottom: 50%;
+            position: fixed;
             top: 50%;
-            right: 50%;
             left: 50%;
+            transform: translate(-50%, -50%);
             height: 200px;
             width: 400px;
+            z-index: 10;
         }
         .close-research-tool {
             position: absolute;
@@ -50,8 +58,104 @@
         .modal-text {
             margin: 30px;
         }
+        #viewer {
+            height: 70vh;
+            width: 100%;
+            border: 12px double hotpink;
+            margin: 24px 0;
+            background: #111;
+        }
+        .image-menu {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            margin-bottom: 80px;
+        }
+        .image-menu section {
+            border: 3px dashed deeppink;
+            padding: 12px;
+            background: #fbeaff;
+        }
+        .image-menu button {
+            display: block;
+            width: 100%;
+            margin-top: 8px;
+            padding: 10px;
+            border: 2px solid purple;
+            background: #fff;
+            color: #333;
+            font-size: 14px;
+            text-align: left;
+        }
+        .image-menu button:hover,
+        .image-menu button:focus {
+            background: #ffe8ff;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js" integrity="sha512-NR+oGCydy94jR6f7iS+Pv+e6G9jmz+ezF5kuRGnFFcE3mJShzYhy6pHeOz/ya6hchNmzmD9uXFA2dQmt6pvCHA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
+        const tileGroups = [
+            {
+                title: "prod",
+                items: [
+                    {
+                        label: "prod #1",
+                        tileSource: "https://www.jstor.org/iiif/2017/01/03/21/0a358e42-3ffd-4f87-bfd1-6b4d9f3f86b3_deflate.tif/info.json"
+                    },
+                    {
+                        label: "prod #2",
+                        tileSource: "https://www.jstor.org/iiif/2016/05/11/01/c6d7efbf-5e0e-4fb4-b271-1169172cb8bc_deflate.tif/info.json"
+                    },
+                    {
+                        label: "prod #3",
+                        tileSource: "https://stor.artstor.org/iiif/2020/05/07/01/29df61cd-12d0-4f26-bea6-cffde1c17b31_deflate.tif/info.json"
+                    },
+                    {
+                        label: "prod #4",
+                        tileSource: "https://stor.artstor.org/iiif/2012/08/14/14/d1e7e379-2918-4b9a-8a7d-9f00589d51ee_deflate.tif/info.json"
+                    }
+                ]
+            },
+            {
+                title: "firefly",
+                items: [
+                    {
+                        label: "firefly #1",
+                        tileSource: "https://firefly.jstor.org/iiif/2024/12/05/16/d085f050-4f22-492f-be2c-6f1fb3ec692f_deflate.tif/info.json"
+                    },
+                    {
+                        label: "firefly #2",
+                        tileSource: "https://firefly.jstor.org/iiif/2024/05/16/17/c03a97cb-9d3e-4db9-9e03-19d3a0fb6c71_deflate.tif/info.json"
+                    },
+                    {
+                        label: "firefly #3",
+                        tileSource: "https://stor.stage.artstor.org/iiif/2020/10/30/22/8a5bb4c6-5538-4fa5-bfac-e957730eab4d_deflate.tif/info.json"
+                    },
+                    {
+                        label: "firefly #4",
+                        tileSource: "https://firefly.jstor.org/iiif/2024/03/12/20/e49306ea-7c28-4b69-b813-716e36a05b5c_deflate.tif/info.json"
+                    }
+                ]
+            },
+            {
+                title: "bonus",
+                items: [
+                    {
+                        label: "duplicate firefly #2",
+                        tileSource: "https://firefly.jstor.org/iiif/2024/05/16/17/c03a97cb-9d3e-4db9-9e03-19d3a0fb6c71_deflate.tif/info.json"
+                    },
+                    {
+                        label: "duplicate firefly #4",
+                        tileSource: "https://firefly.jstor.org/iiif/2024/03/12/20/e49306ea-7c28-4b69-b813-716e36a05b5c_deflate.tif/info.json"
+                    },
+                    {
+                        label: "duplicate stage #1",
+                        tileSource: "https://stor.stage.artstor.org/iiif/2020/10/30/22/8a5bb4c6-5538-4fa5-bfac-e957730eab4d_deflate.tif/info.json"
+                    }
+                ]
+            }
+        ];
+
         function closeResearchTool() {
             const modal = document.getElementById("research-tool-modal");
             modal.style.display = "none";
@@ -61,25 +165,54 @@
             const modal = document.getElementById("research-tool-modal");
             modal.style.display = "block";
         }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const viewer = OpenSeadragon({
+                id: "viewer",
+                prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/",
+                showNavigator: true,
+                navigatorAutoFade: false,
+                animationTime: 0.8,
+                blendTime: 0.2,
+                maxZoomPixelRatio: 2
+            });
+
+            const defaultTile = tileGroups[0]?.items[0]?.tileSource;
+            if (defaultTile) {
+                viewer.open(defaultTile);
+            }
+
+            const menuContainer = document.getElementById("image-menu");
+
+            tileGroups.forEach((group) => {
+                const section = document.createElement("section");
+
+                const title = document.createElement("h3");
+                title.textContent = group.title;
+                section.appendChild(title);
+
+                group.items.forEach((item) => {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.textContent = item.label;
+                    button.dataset.tileSource = item.tileSource;
+                    button.addEventListener("click", () => {
+                        viewer.open(item.tileSource);
+                    });
+                    section.appendChild(button);
+                });
+
+                menuContainer.appendChild(section);
+            });
+        });
     </script>
 </head>
 <body>
     <h1>ARTSTOR 2</h1>
     <h2>I am stealing these images from JSTOR to make my own website for art research. <br> I call it: ARTSTOR 2</h2>
-    <h3>prod</h3>
-    <img height="300" src="https://www.jstor.org/iiif/2017/01/03/21/0a358e42-3ffd-4f87-bfd1-6b4d9f3f86b3_deflate.tif/full/max/0/default.jpg" alt="">
-    <img height="300" src="https://www.jstor.org/iiif/2016/05/11/01/c6d7efbf-5e0e-4fb4-b271-1169172cb8bc_deflate.tif/full/max/0/default.jpg" alt="">
-    <img height="300" src="https://stor.artstor.org/iiif/2020/05/07/01/29df61cd-12d0-4f26-bea6-cffde1c17b31_deflate.tif/full/full/0/default.jpg" alt="">
-    <img height="300" src="https://stor.artstor.org/iiif/2012/08/14/14/d1e7e379-2918-4b9a-8a7d-9f00589d51ee_deflate.tif/full/max/0/default.jpg" alt="">
-    <h3>firefly</h3>
-    <img height="300" src="https://firefly.jstor.org/iiif/2024/12/05/16/d085f050-4f22-492f-be2c-6f1fb3ec692f_deflate.tif/full/max/0/default.jpg" alt="">
-    <img height="300" src="https://firefly.jstor.org/iiif/2024/05/16/17/c03a97cb-9d3e-4db9-9e03-19d3a0fb6c71_deflate.tif/full/max/0/default.jpg" alt="">
-    <img height="300" src="https://stor.stage.artstor.org/iiif/2020/10/30/22/8a5bb4c6-5538-4fa5-bfac-e957730eab4d_deflate.tif/full/full/0/default.jpg" alt="">
-    <img height="300" src="https://firefly.jstor.org/iiif/2024/03/12/20/e49306ea-7c28-4b69-b813-716e36a05b5c_deflate.tif/full/max/0/default.jpg" alt="">
+    <div id="viewer"></div>
     <div>these ones should show up</div>
-    <img height="300" src="https://firefly.jstor.org/iiif/2024/05/16/17/c03a97cb-9d3e-4db9-9e03-19d3a0fb6c71_deflate.tif/full/max/0/default.jpg" alt="">
-    <img height="300" src="https://firefly.jstor.org/iiif/2024/03/12/20/e49306ea-7c28-4b69-b813-716e36a05b5c_deflate.tif/full/max/0/default.jpg" alt="">
-    <img height="300" src="https://stor.stage.artstor.org/iiif/2020/10/30/22/8a5bb4c6-5538-4fa5-bfac-e957730eab4d_deflate.tif/full/full/0/default.jpg" alt="">
+    <div id="image-menu" class="image-menu"></div>
 
     <button onclick="displayResearchTool()" class="research-tool">
         CLICK HERE TO USE THE NEW <br>
